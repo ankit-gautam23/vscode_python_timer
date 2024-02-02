@@ -39,11 +39,10 @@ class OktaLogCollector:
         return datetime.now(timezone.utc) - timedelta(minutes=self.back_fill_dur_min)
 
     def get_url_to_query(self):
-        if url_data_json := storage_account.getOktaUrl(self.get_next_link_s3_obj_key()):
+        if url_data := storage_account.getOktaUrl(self.get_next_link_s3_obj_key()):
 
             try:
-                logger.info("url_data_json read from s3 = %s", url_data_json)
-                url_data = json.loads(url_data_json)
+                logger.info("url_data_json read from s3 = %s", url_data)
                 link = url_data[OKTA_NEXT_LINK]
                 if validators.url(link) and int(url_data[RETRIES]) < MAX_RETRIES:
                     logger.info("valid link read from s3 with valid retries = %s", url_data[RETRIES])
