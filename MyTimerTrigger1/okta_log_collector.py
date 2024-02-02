@@ -4,6 +4,9 @@ import requests
 from datetime import datetime, timedelta, timezone
 import helper as hp
 import constants as const
+import log_ingester
+import msgspec_okta_event
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -42,7 +45,7 @@ def collect_logs():
         response = requests.request("GET", url_for_fetching, headers=headers)
         response.raise_for_status()
         logger.info("helper integrated")
-        #log_ingester.ingest_to_lm_logs(msgspec_okta_event.loads(response.text))
+        log_ingester.ingest_to_lm_logs(msgspec_okta_event.loads(response.text))
             # while response.links["next"]["url"]:
             #     next_url = response.links["next"]["url"]
             #     url_to_persist = next_url
