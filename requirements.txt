@@ -8,3 +8,6 @@ botocore
 python-dateutil
 validators
 msgspec
+azure-identity
+azure-keyvault-secrets
+azure.storage.blob
