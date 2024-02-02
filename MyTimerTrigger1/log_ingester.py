@@ -10,7 +10,6 @@ from functools import reduce
 
 import requests
 
-from . import aws
 from . import constants as const
 from . import helper as hp
 from .msgspec_okta_event import dumps, r_getattr
@@ -24,9 +23,9 @@ class LogIngester:
     def __init__(self):
         self.metadata_deep_path = None
         self.company = hp.get_required_attr_from_env(const.COMPANY_NAME)
-        self.lm_access_id = aws.get_secret_val(hp.get_attr_from_env(const.LM_ACCESS_ID))
-        self.lm_access_key = aws.get_secret_val(hp.get_attr_from_env(const.LM_ACCESS_KEY))
-        self.lm_bearer_token = aws.get_secret_val(hp.get_attr_from_env(const.LM_BEARER_TOKEN))
+        self.lm_access_id = hp.get_attr_from_env(const.LM_ACCESS_ID)
+        self.lm_access_key = hp.get_attr_from_env(const.LM_ACCESS_KEY)
+        self.lm_bearer_token = hp.get_attr_from_env(const.LM_BEARER_TOKEN)
         self.lm_resource_id = hp.get_attr_as_json_from_env(const.LM_RESOURCE_ID)
         self.set_metadata_deep_path()
         self.include_metadata_keys = hp.get_required_attr_from_env(const.INCLUDE_METADATA_KEYS)
