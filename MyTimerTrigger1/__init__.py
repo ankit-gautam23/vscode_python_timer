@@ -2,7 +2,7 @@ import datetime
 import logging
 
 import azure.functions as func
-import okta_log_collector
+from .okta_log_collector import OktaLogCollector
 
 def main(mytimer: func.TimerRequest) -> None:
     utc_timestamp = datetime.datetime.utcnow().replace(
@@ -12,7 +12,8 @@ def main(mytimer: func.TimerRequest) -> None:
         logging.info('The timer is past due!')
 
     try:
-        okta_log_collector.collect_logs()
+        logging.info("in try block")
+        OktaLogCollector.collect_logs()
     except Exception as e:
                 logging.error("error %s", str(e))
     logging.info('Python timer trigger function after changes ran at %s', utc_timestamp)
