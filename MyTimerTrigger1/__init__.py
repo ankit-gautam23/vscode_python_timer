@@ -8,12 +8,13 @@ def main(mytimer: func.TimerRequest) -> None:
     utc_timestamp = datetime.datetime.utcnow().replace(
         tzinfo=datetime.timezone.utc).isoformat()
 
+    oktaLogCollector = OktaLogCollector()
     if mytimer.past_due:
         logging.info('The timer is past due!')
 
     try:
         logging.info("in try block")
-        OktaLogCollector.collect_logs()
+        oktaLogCollector.collect_logs()
     except Exception as e:
                 logging.error("error %s", str(e))
     logging.info('Python timer trigger function after changes ran at %s', utc_timestamp)
