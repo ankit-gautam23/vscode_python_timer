@@ -7,7 +7,8 @@ import botocore.session
 import os
 from azure.keyvault.secrets import SecretClient
 from azure.identity import DefaultAzureCredential
-
+from . import helper as hp
+import re
 # def retrieveSecret():
 #     # keyVaultName = "OktaSecretPooja"
 #     # KVUri = f"https://{keyVaultName}.vault.azure.net"
@@ -31,14 +32,16 @@ from azure.identity import DefaultAzureCredential
 def getOktaUrl(filename):
     try:
 #enter credentials
-        account_name = 'oktaurlstorepooja'
-        account_key = 'WdOazonRM+creM1aMvIKFkx8BIx4OA0TcXO+x2oVKRMkLxqey8lkNxRMli0JqBWWaTNawy/55W9Z+AStePOFyg=='
-        container_name1 = 'testpooja'
+        accountName = hp.get_required_attr_from_env("AzureWebJobsStorage")#"DefaultEndpointsProtocol=https;AccountName=poojaoktatestbe30;AccountKey=IDJEhdsLHcDRAJLTN5YeHtW+PEULRBIOWo9EHo2dRj4r3cE4RnGw+gVGqU/r68tOqPyhSRfz7iwj+AStK2WGsg==;EndpointSuffix=core.windows.net"#hp.get_required_attr_from_env("AzureWebJobsStorage")
+        #account_name = re.search("AccountName=(.*?);", accountName).group(1)#'oktaurlstorepooja'
+        #account_key = re.search("AccountKey=(.*?);", accountName).group(1)#'WdOazonRM+creM1aMvIKFkx8BIx4OA0TcXO+x2oVKRMkLxqey8lkNxRMli0JqBWWaTNawy/55W9Z+AStePOFyg=='
+        container_name1 = 'LRT_S3_BUCKET'
 
         #create a client to interact with blob storage
-        connect_str = 'DefaultEndpointsProtocol=https;AccountName=' + account_name + ';AccountKey=' + account_key + ';EndpointSuffix=core.windows.net'
+        #connect_str = hp.get_required_attr_from_env("AzureWebJobsStorage")#'DefaultEndpointsProtocol=https;AccountName=' + account_name + ';AccountKey=' + account_key + ';EndpointSuffix=core.windows.net'
         
-        blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+       
+        blob_service_client = BlobServiceClient.from_connection_string(accountName)
         container_client = blob_service_client.get_container_client(container_name1)
         blob_client = container_client.get_blob_client(filename)
         if blob_client.exists():
@@ -60,14 +63,15 @@ def getOktaUrl(filename):
 
 
 def updateOktaUrl(filename,body):
-    account_name = 'oktaurlstorepooja'
-    account_key = 'WdOazonRM+creM1aMvIKFkx8BIx4OA0TcXO+x2oVKRMkLxqey8lkNxRMli0JqBWWaTNawy/55W9Z+AStePOFyg=='
-    container_name1 = 'testpooja'
+    accountName = hp.get_required_attr_from_env("AzureWebJobsStorage")#"DefaultEndpointsProtocol=https;AccountName=poojaoktatestbe30;AccountKey=IDJEhdsLHcDRAJLTN5YeHtW+PEULRBIOWo9EHo2dRj4r3cE4RnGw+gVGqU/r68tOqPyhSRfz7iwj+AStK2WGsg==;EndpointSuffix=core.windows.net"#hp.get_required_attr_from_env("AzureWebJobsStorage")
+    #account_name = re.search("AccountName=(.*?);", accountName).group(1)#'oktaurlstorepooja'
+    #account_key = re.search("AccountKey=(.*?);", accountName).group(1)#'WdOazonRM+creM1aMvIKFkx8BIx4OA0TcXO+x2oVKRMkLxqey8lkNxRMli0JqBWWaTNawy/55W9Z+AStePOFyg=='
+    container_name1 = 'LRT_S3_BUCKET'
 
     #create a client to interact with blob storage
-    connect_str = 'DefaultEndpointsProtocol=https;AccountName=' + account_name + ';AccountKey=' + account_key + ';EndpointSuffix=core.windows.net'
+    #connect_str = 'DefaultEndpointsProtocol=https;AccountName=' + account_name + ';AccountKey=' + account_key + ';EndpointSuffix=core.windows.net'
     
-    blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+    blob_service_client = BlobServiceClient.from_connection_string(accountName)
     container_client = blob_service_client.get_container_client(container_name1)
     blob_client = container_client.get_blob_client(filename)
     streamdownloader = blob_client.upload_blob(data=body, overwrite=True)
