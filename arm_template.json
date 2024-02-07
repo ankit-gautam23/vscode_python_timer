@@ -1,0 +1,288 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+    "LM_Company_name": {
+      "type": "string",
+      "metadata": {
+        "description": "The LogicMonitor account name. If your domain is mycompany.logicmonitor.com, then it is mycompany"
+      }
+    },
+    "LM_ACCESS_ID": {
+      "type": "string",
+      "defaultValue":"",
+      "metadata": {
+        "description": "LogicMonitor API Token access ID."
+      }
+    },
+    "LM_ACCESS_KEY": {
+      "type": "string",
+      "defaultValue":"",
+      "metadata": {
+        "description": "LogicMonitor API Token access Key."
+      }
+    },
+    "LM_BEARER_TOKEN": {
+      "type": "string",
+      "defaultValue":"",
+      "metadata": {
+        "description": "LM API Bearer Token.\nEither specify access_id and access_key both or bearer_token. If all specified, LMv1 token(access_id and access_key) will be used for authentication with LogicMonitor."
+      }
+    },
+    
+    "INCLUDE_METADATA_KEYS": {
+      "type": "string",
+      "defaultValue":"severity,actor.displayName,actor.type,actor.alternateId,client.geographicalContext.city,displayMessage,eventType,target",
+      "metadata": {
+        "description": "comma separated keys to add as event metadata in a lm-log event. for nested json specify '.' eg - actor.displayname,actor.type"
+      }
+    },
+    "OKTA_API_KEY":{
+      "type": "string",
+      "metadata": {
+        "description": "Okta API key to fetch logs from okta."
+      }
+    },
+    "OKTA_DOMAIN":{
+      "type": "string",
+      "metadata": {
+        "description": "okta domain eg 'company.okta.com'."
+      }
+    },
+    "LM_SERVICE_NAME_KEY":{
+      "type": "string",
+      "defaultValue":"okta-system-logs",
+      "metadata": {
+        "description": "This will be used for anomaly detection."
+      }
+    }
+    },
+    "functions": [],
+    "variables": {
+    "storage": "[toLower(concat(parameters('LM_Company_name'),'okta'))]",
+    "KEY_VAULT": "[if(greater(length(parameters('LM_Company_name')) , 12), substring(parameters('LM_Company_name'), sub(length(parameters('LM_Company_name')) , 12), 12) ,parameters('LM_Company_name'))]",   
+    "storageAccountName": "[if(greater(length(variables('storage')) , 24), substring(variables('storage'), sub(length(variables('storage')) , 24), 24) , variables('storage'))]",    
+    "keyVaultSecretOktaKey": "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'oktakey')]",
+    "serverFarmName": "[concat('lm-okta','-',parameters('LM_Company_name'))]",
+    "keyVaultSecretLMAccessKey": "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'lmkey')]",
+    "keyVaultSecretLMAccessId": "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'lmid')]",
+    "keyVaultSecretLMBearerToken": "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'lmbearer')]"
+    },
+    "resources": [
+    {
+        "type" : "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2020-08-01-preview",
+        "name":"[variables('storageAccountName')]",
+        "kind": "Storage",
+        "location":"[resourceGroup().location]",
+        "sku": {
+            "name": "Standard_LRS",
+            "tier": "Standard"
+        },
+        "properties": {
+          "minimumTlsVersion":"TLS1_2"
+        },
+        "resources": [
+                {
+                    "type": "blobServices/containers",
+                    "apiVersion": "2019-06-01",
+                    "name": "[concat('default/', 'oktalinkcontainer')]",
+                    "dependsOn": [
+                        "[variables('storageAccountName')]"
+                    ]
+                }
+            ]
+    },
+    {
+        "type": "Microsoft.Web/serverfarms",
+        "apiVersion": "2021-03-01",
+        "location":"[resourceGroup().location]",
+        "name":"[variables('serverFarmName')]",
+        "sku": {
+            "name": "P1v2",
+            "tier": "PremiumV2",
+            "size": "P1v2",
+            "family":"Pv2",
+            "capacity": 1
+        },
+        "properties": {
+            "hyperV": false,
+            "isXenon": false,
+            "reserved": true
+        }
+        
+    },
+    {
+        "type": "Microsoft.Insights/components",
+        "apiVersion": "2020-02-02-preview",
+        "name":"[variables('serverFarmName')]",
+        "location":"[resourceGroup().location]",
+        "properties": {
+            "Application_Type": "web",
+            "DisableIpMasking": true
+        }
+    },
+    {
+        "name": "[variables('serverFarmName')]",
+        "type": "Microsoft.Web/sites",
+        "apiVersion": "2021-03-01",
+        "location": "[resourceGroup().location]",
+        "kind": "functionapp",
+        "identity": {
+                "type": "SystemAssigned"
+            },
+        "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+            "[resourceId('Microsoft.Insights/components', variables('serverFarmName'))]"
+
+        ],
+
+        "properties": {
+            "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]",
+            "siteConfig": {
+                "linuxFxVersion": "PYTHON|3.11",
+                "alwaysOn": true,
+                "use32BitWorkerProcess": true
+            }
+        },
+        "resources" :[
+            {
+                "type": "sourcecontrols",
+                "apiVersion": "2022-09-01",
+                "name":"web",
+                "dependsOn": [
+                    "[resourceId('Microsoft.Web/sites', variables('serverFarmName'))]",
+                    "[resourceId('Microsoft.Web/sites/config', variables('serverFarmName'), 'appsettings')]"
+                ],
+                "properties": {
+                    "branch":"main", 
+                    "repoUrl": "https://github.com/choudharypooja/vscode_python_timer.git", 
+                    "isManualIntegration": true
+                }
+            },
+            {
+          "apiVersion": "2019-08-01",
+          "name": "appsettings",
+          "type": "config",
+          "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+            "[resourceId('Microsoft.Insights/components', variables('serverFarmName'))]",
+            "[resourceId('Microsoft.KeyVault/vaults/', variables('KEY_VAULT'))]",
+            "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'oktakey')]",
+            "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'lmid')]",
+            "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'lmkey')]",
+            "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'lmbearer')]",
+            "[resourceId('Microsoft.Web/sites', variables('serverFarmName'))]"
+          ],
+          "properties": {
+            "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]",
+            "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components',variables('serverFarmName')), '2015-05-01').InstrumentationKey]",
+             "FUNCTIONS_WORKER_RUNTIME": "python",
+             "APPLICATIONINSIGHTS_CONNECTION_STRING": "[reference(resourceId('Microsoft.Insights/components',variables('serverFarmName')),'2015-05-01').ConnectionString]",
+             "WEBSITE_NODE_DEFAULT_VERSION": "~18",
+             "ENABLE_ORYX_BUILD": "true",
+             "SCM_DO_BUILD_DURING_DEPLOYMENT": "1",
+             "XDG_CACHE_HOME": "/tmp/.cache",
+             "FUNCTIONS_EXTENSION_VERSION": "~4",
+             "COMPANY_NAME": "[parameters('LM_Company_name')]",
+             "LM_ACCESS_ID": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('keyVaultSecretLMAccessId'), '2015-06-01').secretUriWithVersion, ')')]",
+             "LM_ACCESS_KEY": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('keyVaultSecretLMAccessKey'), '2015-06-01').secretUriWithVersion, ')')]",
+             "LM_BEARER_TOKEN": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('keyVaultSecretLMBearerToken'), '2015-06-01').secretUriWithVersion, ')')]",
+             "APPLICATION_NAME": "lm-logs-okta",
+             "INCLUDE_METADATA_KEYS": "actor.type",
+             "LOG_LEVEL": "WARNING",
+             "OKTA_API_KEY": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('keyVaultSecretOktaKey'), '2015-06-01').secretUriWithVersion, ')')]",
+             "OKTA_DOMAIN": "[parameters('OKTA_DOMAIN')]",
+             "LM_SERVICE_NAME_KEY": "[parameters('LM_SERVICE_NAME_KEY')]",
+             "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
+             "BUILD_FLAGS": "UseExpressBuild",
+             "LM_RESOURCE_ID": "{\"system.hostname\" : \"prod-node-us-west-1\"}"
+            }
+          }
+        ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "name": "[variables('KEY_VAULT')]",
+      "apiVersion": "2023-07-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "enabledForDeployment": true,
+        "tenantId": "[subscription().tenantId]",
+        "enabledForTemplateDeployment": true,
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        },
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.Web/sites/', variables('serverFarmName')), '2020-12-01', 'Full').identity.principalId]",
+            "permissions": {
+              "keys": [
+                "get",
+                "list"
+              ],
+              "secrets": [
+                "get",
+                "list"
+              ]
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('serverFarmName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]"
+      ],
+      "resources":[
+      {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "name": "[concat(variables('KEY_VAULT'), '/', 'oktakey')]",
+      "apiVersion": "2022-07-01",
+      "dependsOn": [
+        "[concat('Microsoft.KeyVault/vaults/', variables('KEY_VAULT'))]"
+      ],
+      "properties": {
+        "value": "[parameters('OKTA_API_KEY')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "name": "[concat(variables('KEY_VAULT'), '/', 'lmkey')]",
+      "apiVersion": "2022-07-01",
+      "dependsOn": [
+        "[concat('Microsoft.KeyVault/vaults/', variables('KEY_VAULT'))]"
+      ],
+      "properties": {
+        "value": "[parameters('LM_ACCESS_KEY')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "name": "[concat(variables('KEY_VAULT'), '/', 'lmid')]",
+      "apiVersion": "2022-07-01",
+      "dependsOn": [
+        "[concat('Microsoft.KeyVault/vaults/', variables('KEY_VAULT'))]"
+      ],
+      "properties": {
+        "value": "[parameters('LM_ACCESS_ID')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "name": "[concat(variables('KEY_VAULT'), '/', 'lmbearer')]",
+      "apiVersion": "2022-07-01",
+      "dependsOn": [
+        "[concat('Microsoft.KeyVault/vaults/', variables('KEY_VAULT'))]"
+      ],
+      "properties": {
+        "value": "[parameters('LM_BEARER_TOKEN')]"
+      }
+    }
+    ]
+    }
+    ],
+    "outputs": {}
+}
