@@ -210,6 +210,7 @@
         "enabledForDeployment": true,
         "tenantId": "[subscription().tenantId]",
         "enabledForTemplateDeployment": true,
+        "enableSoftDelete": false,
         "sku": {
           "name": "standard",
           "family": "A"

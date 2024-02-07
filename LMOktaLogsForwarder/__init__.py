@@ -4,12 +4,12 @@ import logging
 import azure.functions as func
 from .okta_log_collector import OktaLogCollector
 
-def main(LMOktaTimer: func.TimerRequest) -> None:
+def main(mytimer: func.TimerRequest) -> None:
     utc_timestamp = datetime.datetime.utcnow().replace(
         tzinfo=datetime.timezone.utc).isoformat()
 
     oktaLogCollector = OktaLogCollector()
-    if LMOktaTimer.past_due:
+    if mytimer.past_due:
         logging.info('The timer is past due!')
 
     try:
