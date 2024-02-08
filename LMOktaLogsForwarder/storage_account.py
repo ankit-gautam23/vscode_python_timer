@@ -26,20 +26,21 @@ def getOktaUrl(filename):
             return None
     except botocore.exceptions.ClientError as e:
         logging.error("Error while retrieving persisted url %s", str(e))
-        #if bucket_exists(BUCKET):
-        logging.info("URL not found in s3 bucket. Back-filling logs. ")
+        logging.info("URL not found in storage_account bucket. Back-filling logs. ")
         return None
-        # else:
-        #     raise Exception("Unable to connect to S3 bucket %s. It does not exist. S3 bucket is required to persist "
-        #                     "the last reported "
-        #                     "timestamp. Exception=%s", BUCKET, e)
-
+        
 
 def updateOktaUrl(filename,body):
-    accountName = hp.get_required_attr_from_env("AzureWebJobsStorage")
-    container_name = const.CONTAINER
+    try:
+        accountName = hp.get_required_attr_from_env("AzureWebJobsStorage")
+        container_name = const.CONTAINER
 
-    blob_service_client = BlobServiceClient.from_connection_string(accountName)
-    container_client = blob_service_client.get_container_client(container_name)
-    blob_client = container_client.get_blob_client(filename)
-    streamdownloader = blob_client.upload_blob(data=body, overwrite=True)
+        blob_service_client = BlobServiceClient.from_connection_string(accountName)
+        container_client = blob_service_client.get_container_client(container_name)
+        blob_client = container_client.get_blob_client(filename)
+        if blob_client.exists():
+            streamdownloader = blob_client.upload_blob(data=body, overwrite=True)
+        else:
+            logging.error("Error while updating persisted url : container does not exist")
+    except botocore.exceptions.ClientError as e:
+        logging.error("Error while updating persisted url %s", str(e))

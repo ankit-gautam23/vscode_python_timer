@@ -39,13 +39,13 @@ class OktaLogCollector:
         return datetime.now(timezone.utc) - timedelta(minutes=self.back_fill_dur_min)
 
     def get_url_to_query(self):
-        if url_data := storage_account.getOktaUrl(self.get_next_link_s3_obj_key()):
+        if url_data := storage_account.getOktaUrl(self.get_next_link_storage_account_obj_key()):
 
             try:
-                logger.info("url_data_json read from s3 = %s", url_data)
+                logger.info("url_data_json read from storage_account = %s", url_data)
                 link = url_data[OKTA_NEXT_LINK]
                 if validators.url(link) and int(url_data[RETRIES]) < MAX_RETRIES:
-                    logger.info("valid link read from s3 with valid retries = %s", url_data[RETRIES])
+                    logger.info("valid link read from storage_account with valid retries = %s", url_data[RETRIES])
                     self.retry_attempt = int(url_data[RETRIES])
                     return link
                 else:
@@ -54,12 +54,12 @@ class OktaLogCollector:
                                 link, url_data[RETRIES], MAX_RETRIES)
                     return self.build_log_fetching_url()
             except Exception as e:
-                logger.error("Unable to read persisted url from S3. Error = %s", str(e))
+                logger.error("Unable to read persisted url from storage_account. Error = %s", str(e))
                 raise e
         else:
             return self.build_log_fetching_url()
 
-    def get_next_link_s3_obj_key(self):
+    def get_next_link_storage_account_obj_key(self):
         return "nextLinkForOktaLogs-" + self.log_ingester.get_company_name() + "-" + self.domain
 
     def build_log_fetching_url(self):
@@ -74,10 +74,10 @@ class OktaLogCollector:
     def update_next_url_to_query(self, url, retry):
         if validators.url(url) and retry >= 0:
             link_data = {OKTA_NEXT_LINK: url, RETRIES: retry}
-            logger.info("Updating s3 with data = %s", json.dumps(link_data))
-            storage_account.updateOktaUrl(self.get_next_link_s3_obj_key(), json.dumps(link_data))
+            logger.info("Updating storage_account with data = %s", json.dumps(link_data))
+            storage_account.updateOktaUrl(self.get_next_link_storage_account_obj_key(), json.dumps(link_data))
         else:
-            logger.warning("Invalid URL or negative retry count. Not updating in s3. url = %s, retry = %s", url, retry)
+            logger.warning("Invalid URL or negative retry count. Not updating in storage_account. url = %s, retry = %s", url, retry)
 
     def collect_logs(self):
         
@@ -98,8 +98,8 @@ class OktaLogCollector:
             while response.links["next"]["url"]:
                 next_url = response.links["next"]["url"]
                 url_to_persist = next_url
-                # persist url to s3 as soon as ingestion is successful
-                logger.info("Updating next url to s3 after last successful ingestion : %s ", next_url)
+                # persist url to storage_account as soon as ingestion is successful
+                logger.info("Updating next url to storage_account after last successful ingestion : %s ", next_url)
                 self.update_next_url_to_query(url_to_persist, 0)
 
                 url_for_fetching = url_to_persist
@@ -128,8 +128,8 @@ class OktaLogCollector:
                                    "retry_attempt to persist = %s", url_to_persist, str(self.retry_attempt))
                     self.update_next_url_to_query(url_to_persist, self.retry_attempt)
                 else:
-                    logger.info("URL unchanged. Skipping update in s3.")
+                    logger.info("URL unchanged. Skipping update in storage_account.")
             else:
-                logger.info("Updating next url in s3 to %s", url_to_persist)
+                logger.info("Updating next url in storage_account to %s", url_to_persist)
                 self.update_next_url_to_query(url_to_persist, 0)
             logger.info("Okta log collection completed ... ")
