@@ -2,12 +2,18 @@
     "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "variables": {
-      "templateBaseUri": "https://github.com/choudharypooja/vscode_python_timer/",
-      "deploymentResourceGroupName": "[concat('lm-logs','-',parameters('LM_Company_name'), '-', replace(parameters('resource_group_region'),' ',''),'-group')]",
+      "templateBaseUri": "https://raw.githubusercontent.com/choudharypooja/vscode_python_timer/main/",
+      "deploymentResourceGroupName": "[concat('lm-okta','-',parameters('LM_COMPANY'),'-group')]",
       "subscriptionId": "[subscription().subscriptionId]"
     },
     "parameters": {
-        "LM_Company_name": {
+		"AZURE_REGION":{
+		"type": "string",
+        "metadata": {
+          "description": "Region in which the resources should be created"
+        }
+		},
+        "LM_COMPANY": {
         "type": "string",
         "metadata": {
           "description": "The LogicMonitor account name. If your domain is mycompany.logicmonitor.com, then it is mycompany"
@@ -74,7 +80,7 @@
         "condition": "[or(and(not(empty(parameters('LM_Access_Id'))), not(empty(parameters('LM_Access_Key')))), not(empty(parameters('LM_Bearer_Token'))))]",
         "type": "Microsoft.Resources/resourceGroups",
         "apiVersion": "2018-05-01",
-        "location": "[parameters('resource_group_region')]",
+        "location": "[parameters('AZURE_REGION')]",
         "name": "[variables('deploymentResourceGroupName')]",
         "properties": {}
       },
@@ -91,8 +97,8 @@
             "contentVersion": "1.0.0.0"
           },
           "parameters": {
-            "LM_Company_name": {
-              "value": "[parameters('LM_Company_name')]"
+            "LM_COMPANY": {
+              "value": "[parameters('LM_COMPANY')]"
             },
             "LM_ACCESS_ID": {
               "value": "[parameters('LM_ACCESS_ID')]"
@@ -107,7 +113,7 @@
               "value": "[parameters('OKTA_API_KEY')]"
             },
             "OKTA_DOMAIN": {
-              "value": "[variables('OKTA_DOMAIN')]"
+              "value": "[parameters('OKTA_DOMAIN')]"
             },
             "LM_SERVICE_NAME_KEY": {
               "value": "[parameters('LM_SERVICE_NAME_KEY')]"

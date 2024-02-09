@@ -2,7 +2,7 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-    "LM_Company_name": {
+    "LM_COMPANY": {
       "type": "string"
     },
     "LM_ACCESS_ID": {
@@ -33,10 +33,10 @@
     "functions": [],
     "variables": {
     "storage": "[toLower(uniqueString(resourceGroup().id))]",
-    "KEY_VAULT": "[if(greater(length(parameters('LM_Company_name')) , 12), substring(parameters('LM_Company_name'), sub(length(parameters('LM_Company_name')) , 12), 12) ,parameters('LM_Company_name'))]",   
+    "KEY_VAULT": "[if(greater(length(parameters('LM_COMPANY')) , 12), substring(parameters('LM_COMPANY'), sub(length(parameters('LM_COMPANY')) , 12), 12) ,parameters('LM_COMPANY'))]",   
     "storageAccountName": "[if(greater(length(variables('storage')) , 24), substring(variables('storage'), sub(length(variables('storage')) , 24), 24) , variables('storage'))]",    
     "keyVaultSecretOktaKey": "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'oktakey')]",
-    "serverFarmName": "[concat('lm-okta','-',parameters('LM_Company_name'))]",
+    "serverFarmName": "[concat('lm-okta','-',parameters('LM_COMPANY'))]",
     "keyVaultSecretLMAccessKey": "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'lmkey')]",
     "keyVaultSecretLMAccessId": "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'lmid')]",
     "keyVaultSecretLMBearerToken": "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'lmbearer')]"
@@ -139,7 +139,7 @@
              "SCM_DO_BUILD_DURING_DEPLOYMENT": "1",
              "XDG_CACHE_HOME": "/tmp/.cache",
              "FUNCTIONS_EXTENSION_VERSION": "~4",
-             "COMPANY_NAME": "[parameters('LM_Company_name')]",
+             "COMPANY_NAME": "[parameters('LM_COMPANY')]",
              "LM_ACCESS_ID": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('keyVaultSecretLMAccessId'), '2015-06-01').secretUriWithVersion, ')')]",
              "LM_ACCESS_KEY": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('keyVaultSecretLMAccessKey'), '2015-06-01').secretUriWithVersion, ')')]",
              "LM_BEARER_TOKEN": "[concat('@Microsoft.KeyVault(SecretUri=', reference(variables('keyVaultSecretLMBearerToken'), '2015-06-01').secretUriWithVersion, ')')]",
