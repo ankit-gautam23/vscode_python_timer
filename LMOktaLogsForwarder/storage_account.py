@@ -31,16 +31,11 @@ def getOktaUrl(filename):
         
 
 def updateOktaUrl(filename,body):
-    try:
-        accountName = hp.get_required_attr_from_env("AzureWebJobsStorage")
-        container_name = const.CONTAINER
+    accountName = hp.get_required_attr_from_env("AzureWebJobsStorage")
+    container_name = const.CONTAINER
 
-        blob_service_client = BlobServiceClient.from_connection_string(accountName)
-        container_client = blob_service_client.get_container_client(container_name)
-        blob_client = container_client.get_blob_client(filename)
-        if blob_client.exists():
-            streamdownloader = blob_client.upload_blob(data=body, overwrite=True)
-        else:
-            logging.error("Error while updating persisted url : container does not exist")
-    except botocore.exceptions.ClientError as e:
-        logging.error("Error while updating persisted url %s", str(e))
+    blob_service_client = BlobServiceClient.from_connection_string(accountName)
+    container_client = blob_service_client.get_container_client(container_name)
+    blob_client = container_client.get_blob_client(filename)
+    if blob_client.exists():
+        streamdownloader = blob_client.upload_blob(data=body, overwrite=True)
