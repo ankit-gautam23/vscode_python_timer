@@ -3,70 +3,36 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
     "LM_Company_name": {
-      "type": "string",
-      "metadata": {
-        "description": "The LogicMonitor account name. If your domain is mycompany.logicmonitor.com, then it is mycompany"
-      }
+      "type": "string"
     },
     "LM_ACCESS_ID": {
-      "type": "string",
-      "defaultValue":"",
-      "metadata": {
-        "description": "LogicMonitor API Token access ID."
-      }
+      "type": "string"
     },
     "LM_ACCESS_KEY": {
-      "type": "string",
-      "defaultValue":"",
-      "metadata": {
-        "description": "LogicMonitor API Token access Key."
-      }
+      "type": "string"
     },
     "LM_BEARER_TOKEN": {
-      "type": "string",
-      "defaultValue":"",
-      "metadata": {
-        "description": "LM API Bearer Token.\nEither specify access_id and access_key both or bearer_token. If all specified, LMv1 token(access_id and access_key) will be used for authentication with LogicMonitor."
-      }
+      "type": "string"
     },
-    
     "INCLUDE_METADATA_KEYS": {
-      "type": "string",
-      "defaultValue":"severity,actor.displayName,actor.type,actor.alternateId,client.geographicalContext.city,displayMessage,eventType,target",
-      "metadata": {
-        "description": "comma separated keys to add as event metadata in a lm-log event. for nested json specify '.' eg - actor.displayname,actor.type"
-      }
+      "type": "string"
     },
     "OKTA_API_KEY":{
-      "type": "string",
-      "metadata": {
-        "description": "Okta API key to fetch logs from okta."
-      }
+      "type": "string"
     },
     "OKTA_DOMAIN":{
-      "type": "string",
-      "metadata": {
-        "description": "okta domain eg 'company.okta.com'."
-      }
+      "type": "string"
     },
     "LM_SERVICE_NAME_KEY":{
-      "type": "string",
-      "defaultValue":"okta-system-logs",
-      "metadata": {
-        "description": "This will be used for anomaly detection."
-      }
+      "type": "string"
     },
     "LM_RESOURCE_ID":{
-      "type": "string",
-      "defaultValue":"",
-      "metadata": {
-        "description": "Ignored when LMLogsServiceName is specified. Is a json for resource mapping. if specified as {\"system.hostname\" : \"prod-node-us-west-1\"} all logs will be mapped against the device with property system.hostname = prod-node-us-west-1"
-      }
+      "type": "string"
     }
     },
     "functions": [],
     "variables": {
-    "storage": "[toLower(concat(parameters('LM_Company_name'),'okta'))]",
+    "storage": "[toLower(uniqueString(resourceGroup().id))]",
     "KEY_VAULT": "[if(greater(length(parameters('LM_Company_name')) , 12), substring(parameters('LM_Company_name'), sub(length(parameters('LM_Company_name')) , 12), 12) ,parameters('LM_Company_name'))]",   
     "storageAccountName": "[if(greater(length(variables('storage')) , 24), substring(variables('storage'), sub(length(variables('storage')) , 24), 24) , variables('storage'))]",    
     "keyVaultSecretOktaKey": "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('KEY_VAULT'), 'oktakey')]",

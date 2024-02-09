@@ -1,0 +1,130 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "variables": {
+      "templateBaseUri": "https://github.com/choudharypooja/vscode_python_timer/",
+      "deploymentResourceGroupName": "[concat('lm-logs','-',parameters('LM_Company_name'), '-', replace(parameters('resource_group_region'),' ',''),'-group')]",
+      "subscriptionId": "[subscription().subscriptionId]"
+    },
+    "parameters": {
+        "LM_Company_name": {
+        "type": "string",
+        "metadata": {
+          "description": "The LogicMonitor account name. If your domain is mycompany.logicmonitor.com, then it is mycompany"
+        }
+      },
+      "LM_ACCESS_ID": {
+        "type": "string",
+        "defaultValue":"",
+        "metadata": {
+          "description": "LogicMonitor API Token access ID."
+        }
+      },
+      "LM_ACCESS_KEY": {
+        "type": "string",
+        "defaultValue":"",
+        "metadata": {
+          "description": "LogicMonitor API Token access Key."
+        }
+      },
+      "LM_BEARER_TOKEN": {
+        "type": "string",
+        "defaultValue":"",
+        "metadata": {
+          "description": "LM API Bearer Token.\nEither specify access_id and access_key both or bearer_token. If all specified, LMv1 token(access_id and access_key) will be used for authentication with LogicMonitor."
+        }
+      },
+      
+      "INCLUDE_METADATA_KEYS": {
+        "type": "string",
+        "defaultValue":"severity,actor.displayName,actor.type,actor.alternateId,client.geographicalContext.city,displayMessage,eventType,target",
+        "metadata": {
+          "description": "comma separated keys to add as event metadata in a lm-log event. for nested json specify '.' eg - actor.displayname,actor.type"
+        }
+      },
+      "OKTA_API_KEY":{
+        "type": "string",
+        "metadata": {
+          "description": "Okta API key to fetch logs from okta."
+        }
+      },
+      "OKTA_DOMAIN":{
+        "type": "string",
+        "metadata": {
+          "description": "okta domain eg 'company.okta.com'."
+        }
+      },
+      "LM_SERVICE_NAME_KEY":{
+        "type": "string",
+        "defaultValue":"okta-system-logs",
+        "metadata": {
+          "description": "This will be used for anomaly detection."
+        }
+      },
+      "LM_RESOURCE_ID":{
+        "type": "string",
+        "defaultValue":"",
+        "metadata": {
+          "description": "Ignored when LMLogsServiceName is specified. Is a json for resource mapping. if specified as {\"system.hostname\" : \"prod-node-us-west-1\"} all logs will be mapped against the device with property system.hostname = prod-node-us-west-1"
+        }
+      }
+    },
+    "resources": [
+      {
+        "condition": "[or(and(not(empty(parameters('LM_Access_Id'))), not(empty(parameters('LM_Access_Key')))), not(empty(parameters('LM_Bearer_Token'))))]",
+        "type": "Microsoft.Resources/resourceGroups",
+        "apiVersion": "2018-05-01",
+        "location": "[parameters('resource_group_region')]",
+        "name": "[variables('deploymentResourceGroupName')]",
+        "properties": {}
+      },
+      {
+        "apiVersion": "2017-05-10",
+        "name": "linkedTemplatedeployment",
+        "type": "Microsoft.Resources/deployments",
+        "resourceGroup": "[variables('deploymentResourceGroupName')]",
+        "comments": "Deploy resources within the group",
+        "properties": {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri": "[concat(variables('templateBaseUri'), 'deployResourcesInRG.json')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "LM_Company_name": {
+              "value": "[parameters('LM_Company_name')]"
+            },
+            "LM_ACCESS_ID": {
+              "value": "[parameters('LM_ACCESS_ID')]"
+            },
+            "LM_ACCESS_KEY": {
+              "value": "[parameters('LM_ACCESS_KEY')]"
+            },
+            "LM_BEARER_TOKEN": {
+              "value": "[parameters('LM_BEARER_TOKEN')]"
+            },
+            "OKTA_API_KEY": {
+              "value": "[parameters('OKTA_API_KEY')]"
+            },
+            "OKTA_DOMAIN": {
+              "value": "[variables('OKTA_DOMAIN')]"
+            },
+            "LM_SERVICE_NAME_KEY": {
+              "value": "[parameters('LM_SERVICE_NAME_KEY')]"
+            },
+            "LM_RESOURCE_ID": {
+                "value": "[parameters('LM_RESOURCE_ID')]"
+            },
+            "INCLUDE_METADATA_KEYS": {
+                "value": "[parameters('INCLUDE_METADATA_KEYS')]"
+            }
+          }
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Resources/resourceGroups/', variables('deploymentResourceGroupName'))]"
+        ]
+      }
+    ],
+    "outputs": {}
+  }
+  
