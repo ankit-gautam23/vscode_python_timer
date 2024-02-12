@@ -104,21 +104,7 @@
             }
         },
         "resources" :[
-            {
-                "type": "sourcecontrols",
-                "apiVersion": "2022-09-01",
-                "name":"web",
-                "dependsOn": [
-                    "[resourceId('Microsoft.Web/sites', variables('serverFarmName'))]",
-                    "[resourceId('Microsoft.Web/sites/config', variables('serverFarmName'), 'appsettings')]"
-                ],
-                "properties": {
-                    "branch":"main", 
-                    "repoUrl": "https://github.com/choudharypooja/vscode_python_timer.git", 
-                    "isManualIntegration": true
-                }
-            },
-            {
+          {
           "apiVersion": "2019-08-01",
           "name": "appsettings",
           "type": "config",
@@ -151,7 +137,8 @@
              "LM_SERVICE_NAME_KEY": "[parameters('LM_SERVICE_NAME_KEY')]",
              "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
              "BUILD_FLAGS": "UseExpressBuild",
-             "LM_RESOURCE_ID": "[parameters('LM_RESOURCE_ID')]"
+             "LM_RESOURCE_ID": "[parameters('LM_RESOURCE_ID')]",
+             "WEBSITE_RUN_FROM_PACKAGE" : "https://github.com/choudharypooja/vscode_python_timer/raw/main/LMOktaLogsForwarder.zip"
             }
           }
         ]
