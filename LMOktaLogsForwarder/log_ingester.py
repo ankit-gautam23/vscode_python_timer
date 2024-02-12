@@ -106,12 +106,13 @@ class LogIngester:
         data = json.dumps(payload)
         url = "https://" + self.company + ".logicmonitor.com/rest" + const.LOG_INGESTION_RESOURCE_PATH
         logging.debug("Payload to ingest =%s", data)
-
+        print("lm access id ", self.lm_access_id)
+        print("lm access key ", self.lm_access_key)
         auth = self.generate_auth(data)
 
         headers = {'Content-Encoding': 'gzip', 'Content-Type': 'application/json', 'Authorization': auth,
                    'User-Agent': 'Okta-log-azure-function'}
-        logger.debug("making post request.")
+        logger.info("making post request.")
         response = requests.post(url, data=gzip.compress(data.encode(const.ENCODING)), headers=headers)
         if response.status_code == 202:
             logger.info("Successfully ingested events to log-ingest. x-request-id=%s response=%s",
