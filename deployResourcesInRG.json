@@ -137,11 +137,20 @@
              "LM_SERVICE_NAME_KEY": "[parameters('LM_SERVICE_NAME_KEY')]",
              "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
              "BUILD_FLAGS": "UseExpressBuild",
-             "LM_RESOURCE_ID": "[parameters('LM_RESOURCE_ID')]",
-             "WEBSITE_RUN_FROM_PACKAGE" : "https://github.com/choudharypooja/vscode_python_timer/raw/main/LMOktaLogsForwarder.zip"
-            }
+             "LM_RESOURCE_ID": "[parameters('LM_RESOURCE_ID')]"}
           }
         ]
+    },
+    {
+      "type": "Microsoft.Web/sites/extensions",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', [variables('serverFarmName')], 'zipdeploy')]",
+      "properties": {
+        "packageUri": "https://github.com/choudharypooja/vscode_python_timer/raw/main/LMOktaLogsForwarder.zip"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('serverFarmName'))]"
+      ]
     },
     {
       "type": "Microsoft.KeyVault/vaults",
