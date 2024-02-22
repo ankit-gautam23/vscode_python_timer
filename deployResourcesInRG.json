@@ -85,7 +85,7 @@
     {
         "name": "[variables('serverFarmName')]",
         "type": "Microsoft.Web/sites",
-        "apiVersion": "2021-03-01",
+        "apiVersion": "2022-09-01",
         "location": "[resourceGroup().location]",
         "kind": "functionapp",
         "identity": {
@@ -100,7 +100,13 @@
             "siteConfig": {
                 "linuxFxVersion": "PYTHON|3.11",
                 "alwaysOn": true,
-                "use32BitWorkerProcess": true
+                "use32BitWorkerProcess": true,
+                "appSettings":[
+                  {
+                    "name": "WEBSITE_RUN_FROM_PACKAGE",
+                    "value": "https://github.com/choudharypooja/vscode_python_timer/raw/main/LMOktaLogsForwarder.zip" 
+                  }
+                ]
             }
         },
         "resources" :[
@@ -141,17 +147,6 @@
           }
           }
         ]
-    },
-    {
-      "type": "Microsoft.Web/sites/extensions",
-      "apiVersion": "2021-02-01",
-      "name": "[concat(variables('serverFarmName'), '/', 'zipdeploy')]",
-      "properties": {
-        "packageUri": "https://github.com/choudharypooja/vscode_python_timer/blob/main/LMOktaLogsForwarder.zip"
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', variables('serverFarmName'))]"
-      ]
     },
     {
       "type": "Microsoft.KeyVault/vaults",
