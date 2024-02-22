@@ -28,9 +28,6 @@
     },
     "LM_RESOURCE_ID":{
       "type": "string"
-    },
-    "packageUri": {
-      "type": "string"
     }
     },
     "functions": [],
@@ -152,7 +149,7 @@
       "name": "[concat(variables('serverFarmName'), '/', 'zipdeploy')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "packageUri": "[parameters('packageUri')]"
+        "packageUri": "https://github.com/choudharypooja/vscode_python_timer/blob/main/LMOktaLogsForwarder.zip"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('serverFarmName'))]"
