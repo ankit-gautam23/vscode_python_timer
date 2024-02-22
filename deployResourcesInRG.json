@@ -28,6 +28,9 @@
     },
     "LM_RESOURCE_ID":{
       "type": "string"
+    },
+    "packageUri": {
+      "type": "string",
     }
     },
     "functions": [],
@@ -137,32 +140,23 @@
              "LM_SERVICE_NAME_KEY": "[parameters('LM_SERVICE_NAME_KEY')]",
              "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
              "BUILD_FLAGS": "UseExpressBuild",
-             "LM_RESOURCE_ID": "[parameters('LM_RESOURCE_ID')]"},
-             "WEBSITE_RUN_FROM_PACKAGE": "1"
+             "LM_RESOURCE_ID": "[parameters('LM_RESOURCE_ID')]",
+            "WEBSITE_RUN_FROM_PACKAGE": 1
+          }
           }
         ]
     },
     {
       "type": "Microsoft.Web/sites/extensions",
-      "apiVersion": "2022-03-01",
+      "apiVersion": "2021-02-01",
       "name": "[concat(variables('serverFarmName'), '/', 'zipdeploy')]",
+      "location": "[resourceGroup().location]",
       "properties": {
-        "packageUri": "https://github.com/choudharypooja/vscode_python_timer/raw/main/LMOktaLogsForwarder.zip"
+        "packageUri": "[parameters('packageUri')]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('serverFarmName'))]"
       ]
-    },
-    {
-      "type": "extensions",
-      "name": "pipInstall",
-      "apiVersion": "2015-15-01-preview",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('APPLICATION_NAME'))]"
-      ],
-      "properties": {
-        "commandToExecute": "pip install -r requirements.txt"
-      }
     },
     {
       "type": "Microsoft.KeyVault/vaults",
