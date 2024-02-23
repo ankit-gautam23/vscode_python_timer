@@ -104,7 +104,7 @@
                 "appSettings":[
                   {
                     "name": "WEBSITE_RUN_FROM_PACKAGE",
-                    "value": "https://github.com/choudharypooja/vscode_python_timer/raw/main/LMOktaLogsForwarder.zip" 
+                    "value": "https://github.com/choudharypooja/vscode_python_timer/raw/main/LMOktaLogsForwarder.zip"
                   }
                 ]
             }
@@ -143,7 +143,8 @@
              "LM_SERVICE_NAME_KEY": "[parameters('LM_SERVICE_NAME_KEY')]",
              "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
              "BUILD_FLAGS": "UseExpressBuild",
-             "LM_RESOURCE_ID": "[parameters('LM_RESOURCE_ID')]"
+             "LM_RESOURCE_ID": "[parameters('LM_RESOURCE_ID')]",
+             "WEBSITE_RUN_FROM_PACKAGE": "https://github.com/choudharypooja/vscode_python_timer/raw/main/LMOktaLogsForwarder.zip"
           }
           }
         ]
