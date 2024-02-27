@@ -92,7 +92,8 @@
                 "type": "SystemAssigned"
             },
         "dependsOn": [
-            "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+            "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]"
         ],
 
         "properties": {
@@ -100,13 +101,7 @@
             "siteConfig": {
                 "linuxFxVersion": "PYTHON|3.11",
                 "alwaysOn": true,
-                "use32BitWorkerProcess": true,
-                "appSettings":[
-                  {
-                    "name": "WEBSITE_RUN_FROM_PACKAGE",
-                    "value": "https://github.com/choudharypooja/vscode_python_timer/raw/main/LMOktaLogsForwarder.zip"
-                  }
-                ]
+                "use32BitWorkerProcess": true
             }
         },
         "resources" :[
@@ -127,8 +122,8 @@
             "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2019-06-01').keys[0].value,';EndpointSuffix=','core.windows.net')]",
              "FUNCTIONS_WORKER_RUNTIME": "python",
              "WEBSITE_NODE_DEFAULT_VERSION": "~18",
-             "ENABLE_ORYX_BUILD": "true",
-             "SCM_DO_BUILD_DURING_DEPLOYMENT": "1",
+             "ENABLE_ORYX_BUILD": true,
+             "SCM_DO_BUILD_DURING_DEPLOYMENT":true,
              "XDG_CACHE_HOME": "/tmp/.cache",
              "FUNCTIONS_EXTENSION_VERSION": "~4",
              "COMPANY_NAME": "[parameters('LM_COMPANY')]",
