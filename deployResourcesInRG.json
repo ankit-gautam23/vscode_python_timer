@@ -106,23 +106,6 @@
         },
         "resources" :[
           {
-                    "type": "Microsoft.Web/sites/functions",
-                    "apiVersion": "2022-09-01",
-                    "name": "[concat(variables('serverFarmName'), '/pipInstall')]",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', variables('serverFarmName'))]"
-                    ],
-                    "properties": {
-                        "publisher": "Microsoft.Azure.WebJobs",
-                        "type": "Custom",
-                        "typeHandlerVersion": "1.0",
-                        "autoUpgradeMinorVersion": true,
-                        "settings": {
-                            "COMMAND": "pip install -r home/site/wwwroot/requirements.txt"
-                        }
-                    }
-          },
-          {
           "apiVersion": "2019-08-01",
           "name": "appsettings",
           "type": "config",
