@@ -2,7 +2,7 @@ import datetime
 import logging
 
 import azure.functions as func
-from okta_log_collector import OktaLogCollector
+from .okta_log_collector import OktaLogCollector
 
 def main(mytimer: func.TimerRequest) -> None:
     utc_timestamp = datetime.datetime.utcnow().replace(
