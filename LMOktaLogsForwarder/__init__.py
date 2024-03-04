@@ -2,11 +2,13 @@ import datetime
 import logging
 
 import azure.functions as func
-from .okta_log_collector import OktaLogCollector
+from okta_log_collector import OktaLogCollector
 
 def main(mytimer: func.TimerRequest) -> None:
     utc_timestamp = datetime.datetime.utcnow().replace(
         tzinfo=datetime.timezone.utc).isoformat()
+
+    logging.info(f"The Timer Trigger Function 'main' started at {utc_timestamp}")
 
     oktaLogCollector = OktaLogCollector()
     if mytimer.past_due:

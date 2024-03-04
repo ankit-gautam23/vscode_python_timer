@@ -28,7 +28,10 @@ class LogIngester:
         self.service_name = hp.get_attr_from_env(const.LM_SERVICE_NAME_KEY)
         self.use_lmv1_for_auth = True if (self.lm_access_id and self.lm_access_key) else False
 
+        logger.info(f"LogIngestor initialized for company {self.company}")
+
         if not self.use_lmv1_for_auth and not self.lm_bearer_token:
+            logger.error("Authentication configuration missing for Logicmonitor. Ensure LMAccessId, LMAccessKey, or BearerToken is configured.")
             raise ValueError("Either LMAccessId, LMAccessKey both or BearerToken should be configured for authentication with Logicmonitor.")
 
     def set_metadata_deep_path(self):
@@ -39,18 +42,20 @@ class LogIngester:
             # for k in include_metadata_keys.split(','):
             #     metadata_deep_path.append(k.split('.'))
             self.metadata_deep_path = metadata_deep_path
+            logger.info("Metadata deep path set successfully.")
         except Exception as e:
-            logger.warning(e, exc_info=True)
+            logger.warning(f"Failed to set metadata deep path: {e}", exc_info=True)
             self.metadata_deep_path = None
 
     def get_company_name(self):
         return self.company
 
     def ingest_to_lm_logs(self, raw_json_resp):
-        if len(raw_json_resp) < 1:
+        if not raw_json_resp:
+            logger.info("No logs to ingest. Empty response received.")
             return
         # split
-        logger.info("number of logs in response = %s", str(len(raw_json_resp)))
+        logger.info("Ingesting %s logs to LogicMonitor", str(len(raw_json_resp)))
         payload = []
         for event in raw_json_resp:
             payload.append(self.prepare_lm_log_event(event))
@@ -59,6 +64,7 @@ class LogIngester:
 
     def report_logs_in_chunks(self, payload):
         payload_size = len(json.dumps(payload).encode(const.ENCODING))
+        logger.info(f"Preparing to ingest payload of size {payload_size} bytes")
         if payload_size < const.MAX_ALLOWED_PAYLOAD_SIZE and len(payload) > 0:
             # ingest as it is
             logger.info("payload size while ingestion =" + str(payload_size))
@@ -67,7 +73,7 @@ class LogIngester:
             # this is an extremely rare scenario where size of 1000 logs is larger than 8 mbs
             # generally size of 1000 logs is around 3 MBs
             # but if the ever occurs, split data equally and report logs
-            logger.info("splitting payload due to payload size limit exceeded.")
+            logger.info("Payload size exceeds limit. Splitting payload for ingestion.")
             split_len = len(payload) // 2
             self.report_logs_in_chunks(payload[:split_len])
             self.report_logs_in_chunks(payload[split_len:])
@@ -112,7 +118,7 @@ class LogIngester:
 
         headers = {'Content-Encoding': 'gzip', 'Content-Type': 'application/json', 'Authorization': auth,
                    'User-Agent': 'Okta-log-azure-function'}
-        logger.info("making post request.")
+        logger.info("Sending logs to LogicMonitor.")
         response = requests.post(url, data=gzip.compress(data.encode(const.ENCODING)), headers=headers)
         if response.status_code == 202:
             logger.info("Successfully ingested events to log-ingest. x-request-id=%s response=%s",

@@ -3,8 +3,8 @@ import logging
 import json
 import botocore
 import botocore.session
-import helper as hp
-import constants as const
+from . import helper as hp
+from . import constants as const
 
 import re
 

@@ -31,6 +31,7 @@ class OktaLogCollector:
         self.log_ingester = LogIngester()
         self.back_fill_dur_min = BACK_FILL_DURATION_MINUTES
         self.retry_attempt = 0
+        logger.info(f"OktaLogCollector initialized for domain: {self.domain}")
         
     def get_domain(self):
         return self.domain
@@ -39,10 +40,11 @@ class OktaLogCollector:
         return datetime.now(timezone.utc) - timedelta(minutes=self.back_fill_dur_min)
 
     def get_url_to_query(self):
+        logger.info("Fetching URL to query Okta logs...")
         if url_data := storage_account.getOktaUrl(self.get_next_link_storage_account_obj_key()):
 
             try:
-                logger.info("url_data_json read from storage_account = %s", url_data)
+                logger.info(f"URL data retrived from storage = {url_data}")
                 link = url_data[OKTA_NEXT_LINK]
                 if validators.url(link) and int(url_data[RETRIES]) < MAX_RETRIES:
                     logger.info("valid link read from storage_account with valid retries = %s", url_data[RETRIES])
@@ -54,9 +56,10 @@ class OktaLogCollector:
                                 link, url_data[RETRIES], MAX_RETRIES)
                     return self.build_log_fetching_url()
             except Exception as e:
-                logger.error("Unable to read persisted url from storage_account. Error = %s", str(e))
+                logger.error("Unable to read persisted url from storage. Error = %s", str(e))
                 raise e
         else:
+            logger.info("No next link found in storage. Generating initial URL.")
             return self.build_log_fetching_url()
 
     def get_next_link_storage_account_obj_key(self):
@@ -68,19 +71,19 @@ class OktaLogCollector:
         logger.info("LastReportTimeStamp being used as since = %s ", last_report_time)
         query_param = "?since=" + last_report_time + "&sortOrder=ASCENDING" + "&limit=1000"
         final_url = base_url + query_param
-        logger.info("Fetching URL built from scratch = %s", final_url)
+        logger.info("Built initial URL for fetching logs: %s", final_url)
         return final_url
 
     def update_next_url_to_query(self, url, retry):
         if validators.url(url) and retry >= 0:
             link_data = {OKTA_NEXT_LINK: url, RETRIES: retry}
-            logger.info("Updating storage_account with data = %s", json.dumps(link_data))
+            logger.info(f"Updating next URL in storage with retries = {retry}: {url}")
             storage_account.updateOktaUrl(self.get_next_link_storage_account_obj_key(), json.dumps(link_data))
         else:
             logger.warning("Invalid URL or negative retry count. Not updating in storage_account. url = %s, retry = %s", url, retry)
 
     def collect_logs(self):
-        
+        logger.info("Starting Okta log collection process...")
         url_for_fetching = self.get_url_to_query()
         logger.info("Using url to query logs at execution : %s", url_for_fetching)
         url_to_persist = url_for_fetching
@@ -95,6 +98,7 @@ class OktaLogCollector:
             response.raise_for_status()
 
             self.log_ingester.ingest_to_lm_logs(msgspec_okta_event.loads(response.text))
+            logger.info("Initial batch of logs ingested successfully.")
             while response.links["next"]["url"]:
                 next_url = response.links["next"]["url"]
                 url_to_persist = next_url
@@ -114,9 +118,9 @@ class OktaLogCollector:
             logger.info("URL for fetching first : %s, url to persist at the ending : %s", url_for_fetching,
                         url_to_persist)
             url_to_persist = response.links["self"]["url"]
-
+            logger.info()
         except Exception as e:
-
+            logger.info(f"Exception during log collection: {e}")
             if url_to_persist == url_for_fetching:
                 logger.error("Exception encountered. incrementing retry attempt. Error = %s", str(e))
                 self.retry_attempt += 1
@@ -132,4 +136,4 @@ class OktaLogCollector:
             else:
                 logger.info("Updating next url in storage_account to %s", url_to_persist)
                 self.update_next_url_to_query(url_to_persist, 0)
-            logger.info("Okta log collection completed ... ")
+            logger.info("Okta log collection completed.")
